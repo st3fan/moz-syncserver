@@ -48,7 +48,7 @@ func main() {
 		SharedSecret: sharedSecret,
 	}
 
-	_, err = storageserver.SetupRouter(router.PathPrefix("/token").Subrouter(), storageServerConfig)
+	_, err = storageserver.SetupRouter(router.PathPrefix("/storage").Subrouter(), storageServerConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
