@@ -98,7 +98,7 @@ sudo service syncserver start
 Check if everything is running ok by calling the `/version` API endpoint:
 
 ```
-curl https://sync.sateh.com/version; echo
+curl https://sync.example.com/version; echo
 {"version":"0.1"}
 ```
 
