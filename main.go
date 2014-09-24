@@ -30,11 +30,11 @@ func main() {
 
 	tokenServerConfig := tokenserver.Config{
 		PersonaVerifier:   "https://verifier.accounts.firefox.com/v2",
-		PersonaAudience:   "http://localhost:5000",
+		PersonaAudience:   "https://sync.sateh.com",
 		AllowNewUsers:     true,
 		TokenDuration:     300,
 		SharedSecret:      sharedSecret,
-		StorageServerNode: "http://localhost:5000/storage",
+		StorageServerNode: "https://sync.sateh.com/storage",
 		DatabaseUrl:       "postgres://tokenserver:tokenserver@localhost/tokenserver",
 	}
 
