@@ -55,6 +55,19 @@ cd /usr/local/sbin
 wget TODO INSERT LINK TO RELEASE HERE
 ```
 
+Create a configuration file named `/etc/syncserver.ini` and put the following contents in it:
+
+```
+[SyncServer]
+ListenAddress = 127.0.0.1
+ListenPort = 5000
+PublicHostname = https://sync.example.com
+SharedSecret = ThisIsAnImportantSecretThatYouShouldChange
+DataSource = postgres://syncserver:syncserver@localhost/syncserver
+```
+
+> It is important to change the `PublicHostname`, `SharedSecret` and `DataSource` settings.
+
 Then, configure Upstart:
 
 ```
