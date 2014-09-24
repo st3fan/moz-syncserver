@@ -2,13 +2,19 @@
 
 # moz-syncserver
 
-This is a standalone server for Firefox Sync.
+This is a standalone server for Firefox Sync. You can run this if you
+are interested in hosting your own Firefox Sync data.
 
 > This project is in early stages and may have bugs leading to data
   loss. Personally I use it to succesfully sync my Firefox profile
   between three devices. If you are adventurous, please give it a try
   and [file bugs](https://github.com/st3fan/moz-syncserver/issues) and
   feature requests.
+
+Note that this project is a simple wrapper that combines the
+[moz-tokenserver](https://github.com/st3fan/moz-tokenserver/) and
+[moz-storageserver](https://github.com/st3fan/moz-storageserver/)
+projects into a single web application.
 
 ## Requirements
 
