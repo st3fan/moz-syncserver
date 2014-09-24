@@ -9,7 +9,7 @@ create table Users (
   Email        varchar unique not null,
   Generation   bigint not null,
   ClientState  varchar not null
-)
+);
 
 -- From moz-syncserver/setup.sql
 create table Objects (
