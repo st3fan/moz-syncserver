@@ -1,0 +1,16 @@
+language: go
+
+go:
+  - 1.2
+  - 1.3
+
+env:
+  - PGPASSWORD=tokenserver
+
+addons:
+  postgresql: "9.3"
+
+before_script:
+  - psql -c "create user syncserver with password 'syncserver';" -U postgres
+  - psql -c 'create database syncserver owner syncserver;' -U postgres
+  - psql -f setup.sql -U syncserver -d syncserver
