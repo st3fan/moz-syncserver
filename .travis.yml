@@ -17,7 +17,7 @@ before_script:
 deploy:
   provider: releases
   api-key: $TOKEN
-  file: moz-syncserver
+  file: $HOME/gopath/bin/moz-syncserver
   skip_cleanup: true
   on:
     tags: true
