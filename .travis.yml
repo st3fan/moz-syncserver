@@ -4,9 +4,9 @@ go:
 - 1.3
 env:
   matrix:
-  - PGPASSWORD=tokenserver
   global:
-    secure: CdbFy8BnHMZAhajT1obdqhJ3hr88LotYTV+TnJLeEcsmWL450uXCexI+rRiTmoxFz5NtFLcJ+jozXKJwnlNH/gDe/aBl0QRoPsWJkIw04BoCiiqmjTksWQlmlRpA9xT7UulBITajyJtXgp1eQgXxD0YUWL5LTRkPnO197arkLcc=
+  - PGPASSWORD=tokenserver
+  - secure: CdbFy8BnHMZAhajT1obdqhJ3hr88LotYTV+TnJLeEcsmWL450uXCexI+rRiTmoxFz5NtFLcJ+jozXKJwnlNH/gDe/aBl0QRoPsWJkIw04BoCiiqmjTksWQlmlRpA9xT7UulBITajyJtXgp1eQgXxD0YUWL5LTRkPnO197arkLcc=
 addons:
   postgresql: '9.3'
 before_script:
