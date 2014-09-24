@@ -59,7 +59,7 @@ Then, configure Upstart:
 
 ```
 cd /etc/init
-sudo wget TODO INSERT LINK TO UPSTART SCRIPT HERE
+sudo wget https://raw.githubusercontent.com/st3fan/moz-syncserver/master/etc/upstart/syncserver.conf
 sudo service syncserver start
 ```
 
