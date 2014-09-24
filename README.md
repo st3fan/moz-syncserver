@@ -84,7 +84,7 @@ sudo apt-get install nginx
 
 # Download and activate the example nginx configuration
 cd /etc/nginx/sites-available/
-sudo wget TODO INSERT LINK TO UPSTART SCRIPT HERE
+sudo wget https://raw.githubusercontent.com/st3fan/moz-syncserver/master/etc/nginx/syncserver.conf
 cd /etc/nginx/sites-enabled/
 sudo ln -s ../sites-available/syncserver.conf
 
