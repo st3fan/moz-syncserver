@@ -276,6 +276,18 @@ class StorageTest(unittest.TestCase):
         self.assertEquals(object_ids[0], "0")
         self.assertEquals(object_ids[1], "1")
 
+    def test_get_collection_ids_limit_zero_offset(self):
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        object_ids,r = get_objects(self.token, "test", limit=5)
+        self.assertTrue(r.headers.get("X-Weave-Next-Offset") is None)
+        self.assertEquals(len(object_ids), 5)
+        self.assertEquals(object_ids[0], "0")
+        self.assertEquals(object_ids[1], "1")
+        self.assertEquals(object_ids[2], "2")
+        self.assertEquals(object_ids[3], "3")
+        self.assertEquals(object_ids[4], "4")
+
     def test_get_collection_full_limit(self):
         for i in range(5):
             put_object(self.token, "test", str(i), random_object())
@@ -284,6 +296,18 @@ class StorageTest(unittest.TestCase):
         self.assertEquals(len(objects), 2)
         self.assertEquals(objects[0]["id"], "0")
         self.assertEquals(objects[1]["id"], "1")
+
+    def test_get_collection_full_limit_zero_offset(self):
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        objects,r = get_objects(self.token, "test", limit=5, full=1)
+        self.assertTrue(r.headers.get("X-Weave-Next-Offset") is None)
+        self.assertEquals(len(objects), 5)
+        self.assertEquals(objects[0]["id"], "0")
+        self.assertEquals(objects[1]["id"], "1")
+        self.assertEquals(objects[2]["id"], "2")
+        self.assertEquals(objects[3]["id"], "3")
+        self.assertEquals(objects[4]["id"], "4")
 
 
 
