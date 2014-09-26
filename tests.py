@@ -71,6 +71,14 @@ def get_info_collections(token):
     r.raise_for_status()
     return r.json()
 
+def get_info_collection_counts(token):
+    url = token["api_endpoint"] + "/info/collection_counts"
+    hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
+    hawk_header = hawk.client.header(url, "GET", {"credentials": hawk_credentials, "ext":""})
+    r = requests.get(url, headers={"Authorization":hawk_header["field"]})
+    r.raise_for_status()
+    return r.json()
+
 def random_id():
     return str(uuid.uuid4())
 
@@ -156,6 +164,18 @@ class StorageTest(unittest.TestCase):
         self.assertEqual(len(collections), 2)
         self.assertEqual(collections["col1"], modified1)
         self.assertEqual(collections["col2"], modified2)
+
+    def test_get_info_collection_counts(self):
+        # Create two collections
+        for i in range(0,3):
+            put_object(self.token, "col1", random_id(), random_object())
+        for i in range(0,5):
+            put_object(self.token, "col2", random_id(), random_object())
+        # Only those two should be in /info/collection_counts
+        collections = get_info_collection_counts(self.token)
+        self.assertEqual(len(collections), 2)
+        self.assertEqual(collections["col1"], 3)
+        self.assertEqual(collections["col2"], 5)
 
 if __name__ == "__main__":
     unittest.main()
