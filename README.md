@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/st3fan/moz-syncserver.svg?branch=master)](https://travis-ci.org/st3fan/moz-syncserver)
 
-# moz-syncserver
+# moz-syncserver v0.1
 
 This is a standalone server for Firefox Sync. You can run this if you
 are interested in hosting your own Firefox Sync data.
