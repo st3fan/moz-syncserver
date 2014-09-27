@@ -80,7 +80,7 @@ def get_info_collection_counts(token):
     r.raise_for_status()
     return r.json(),r
 
-def get_objects(token, collection_name, full=None, newer=None, limit=None, ids=None):
+def get_objects(token, collection_name, full=None, newer=None, limit=None, offset=None, ids=None):
     params={}
     if full:
         params["full"] = "1"
@@ -88,6 +88,8 @@ def get_objects(token, collection_name, full=None, newer=None, limit=None, ids=N
         params["newer"] = ("%.2f" % newer)
     if limit:
         params["limit"] = limit
+    if offset:
+        params["offset"] = offset
     if ids:
         params["ids"] = ",".join(ids)
     url = token["api_endpoint"] + "/storage/%s" % collection_name + "?" + urllib.urlencode(params)
@@ -309,6 +311,42 @@ class StorageTest(unittest.TestCase):
         self.assertEquals(objects[3]["id"], "3")
         self.assertEquals(objects[4]["id"], "4")
 
+    def test_get_collection_offset_ids(self):
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        ids,r = get_objects(self.token, "test", offset=2)
+        self.assertTrue(r.headers.get("X-Weave-Next-Offset") is None)
+        self.assertEquals(len(ids), 3)
+        self.assertEquals(ids[0], "2")
+        self.assertEquals(ids[1], "3")
+        self.assertEquals(ids[2], "4")
+
+    def test_get_collection_offset_full(self):
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        objects,r = get_objects(self.token, "test", offset=2, full=1)
+        self.assertTrue(r.headers.get("X-Weave-Next-Offset") is None)
+        self.assertEquals(len(objects), 3)
+        self.assertEquals(objects[0]["id"], "2")
+        self.assertEquals(objects[1]["id"], "3")
+        self.assertEquals(objects[2]["id"], "4")
+
+    def test_get_collection_paging(self):
+        for i in range(83):
+            put_object(self.token, "test", "%.4d" % i, random_object())
+        ids1,r = get_objects(self.token, "test", limit=30, offset=0)
+        ids2,r = get_objects(self.token, "test", limit=30, offset=int(r.headers["x-weave-next-offset"]))
+        ids3,r = get_objects(self.token, "test", limit=30, offset=int(r.headers["x-weave-next-offset"]))
+        self.assertEquals(len(ids1), 30)
+        self.assertEquals(len(ids2), 30)
+        self.assertEquals(len(ids3), 23)
+
+    def test_get_collection_paging_outofbounds(self):
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        ids,r = get_objects(self.token, "test", offset=7)
+        self.assertEquals(len(ids), 0)
+        self.assertTrue(r.headers.get("X-Weave-Next-Offset") is None)
 
 
 
