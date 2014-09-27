@@ -355,6 +355,26 @@ class StorageTest(unittest.TestCase):
             ids,r = get_objects(self.token, "test", accepts="application/cheese")
         self.assertEqual(context.exception.response.status_code, 406)
 
+    def test_delete_objects(self):
+        # Put some objects in the collection
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        objects,r = get_objects(self.token, "test")
+        self.assertEquals(len(objects), 5)
+        # Delete some objects
+        ts1, r = delete_object(self.token, "test", "1")
+        ts2, r = delete_object(self.token, "test", "3")
+        # Make sure they are gone
+        ids,r = get_objects(self.token, "test")
+        self.assertEquals(len(ids), 3)
+        self.assertEquals(sorted(ids), ['0', '2', '4'])
+
+    def test_delete_collection(self):
+        pass
+
+    def test_delete_storage(self):
+        pass
+
 
 
 
