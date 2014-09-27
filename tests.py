@@ -80,7 +80,7 @@ def get_info_collection_counts(token):
     r.raise_for_status()
     return r.json(),r
 
-def get_objects(token, collection_name, full=None, newer=None, limit=None, offset=None, ids=None):
+def get_objects(token, collection_name, full=None, newer=None, limit=None, offset=None, ids=None, accepts="application/json"):
     params={}
     if full:
         params["full"] = "1"
@@ -95,7 +95,7 @@ def get_objects(token, collection_name, full=None, newer=None, limit=None, offse
     url = token["api_endpoint"] + "/storage/%s" % collection_name + "?" + urllib.urlencode(params)
     hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
     hawk_header = hawk.client.header(url, "GET", {"credentials": hawk_credentials, "ext":""})
-    r = requests.get(url, headers={"Authorization":hawk_header["field"]})
+    r = requests.get(url, headers={"Authorization":hawk_header["field"],"Accepts":accepts})
     r.raise_for_status()
     return r.json(),r
 
@@ -347,6 +347,13 @@ class StorageTest(unittest.TestCase):
         ids,r = get_objects(self.token, "test", offset=7)
         self.assertEquals(len(ids), 0)
         self.assertTrue(r.headers.get("X-Weave-Next-Offset") is None)
+
+    def test_get_collection_accepts(self):
+        # Unsupported Accepts should result in a 406
+        put_object(self.token, "test", random_id(), random_object())
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            ids,r = get_objects(self.token, "test", accepts="application/cheese")
+        self.assertEqual(context.exception.response.status_code, 406)
 
 
 
