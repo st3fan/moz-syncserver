@@ -32,6 +32,19 @@ def call_mockmyid_server(email, audience):
     r.raise_for_status()
     return r.json().get("assertion"),r
 
+def delete_collection(token, collection_name, ids=None):
+    params = {}
+    if ids:
+        params["ids"] = ",".join(ids)
+    url = token["api_endpoint"] + "/storage/%s" % collection_name
+    if len(params) != 0:
+        url += "?" + urllib.urlencode(params)
+    hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
+    hawk_header = hawk.client.header(url, "DELETE", {"credentials": hawk_credentials, "ext":""})
+    r = requests.delete(url, headers={"Authorization":hawk_header["field"]})
+    r.raise_for_status()
+    return r.json(),r
+
 def get_object(token, collection_name, object_id):
     url = token["api_endpoint"] + "/storage/%s/%s" % (collection_name, object_id)
     hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
@@ -109,7 +122,7 @@ def random_object():
 def random_objects(n):
     return [{"payload":"This is some payload at %f" % time.time(), "id":random_id()} for i in range(n)]
 
-class StorageTest(unittest.TestCase):
+class StorageTestCase(unittest.TestCase):
 
     def setUp(self):
         self.email = "%.4f@mockmyid.com" % time.time()
@@ -370,7 +383,53 @@ class StorageTest(unittest.TestCase):
         self.assertEquals(sorted(ids), ['0', '2', '4'])
 
     def test_delete_collection(self):
-        pass
+        # Make sure the collection does not exist
+        collections,r = get_info_collections(self.token)
+        self.assertTrue("test" not in collections)
+        # Create a collection
+        put_object(self.token, "test", "1", random_object())
+        collections,r = get_info_collections(self.token)
+        self.assertTrue("test" in collections)
+        # Delete the collection
+        j, r = delete_collection(self.token, "test")
+        self.assertTrue("modified" in j)
+        self.assertTrue("X-Last-Modified" in r.headers)
+        self.assertEquals(j["modified"], float(r.headers["X-Last-Modified"]))
+        # TODO Can we predict what modified should be?
+        # Make sure it is gone
+        collections,r = get_info_collections(self.token)
+        self.assertTrue("test" not in collections)
+        # Make sure we cannot retrieve the object
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            o, r = get_object(self.token, "test", "1")
+        self.assertEqual(context.exception.response.status_code, 404)
+
+    def test_delete_collection_that_does_not_exist(self):
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            r = delete_collection(self.token, "doesnotexist")
+        self.assertEqual(context.exception.response.status_code, 404)
+
+    def test_delete_collection_ids(self):
+        # Put some objects in the collection
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        objects,r = get_objects(self.token, "test")
+        self.assertEquals(len(objects), 5)
+        # Delete some objects
+        j, r = delete_collection(self.token, "test", ids=["1","3"])
+        self.assertTrue("modified" in j)
+        self.assertTrue("X-Last-Modified" in r.headers)
+        self.assertEquals(j["modified"], float(r.headers["X-Last-Modified"]))
+        # TODO Can we predict what modified should be?
+        # Make sure they are gone
+        ids,r = get_objects(self.token, "test")
+        self.assertEquals(len(ids), 3)
+        self.assertEquals(sorted(ids), ['0', '2', '4'])
+
+    def test_delete_collection_ids_that_does_not_exist(self):
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            r = delete_collection(self.token, "doesnotexist", ids=["1","2","3"])
+        self.assertEqual(context.exception.response.status_code, 404)
 
     def test_delete_storage(self):
         pass
