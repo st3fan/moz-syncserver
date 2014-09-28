@@ -78,11 +78,12 @@ def delete_object(token, collection_name, object_id):
     r.raise_for_status()
     return r.json(),r
 
-def post_objects(token, collection_name, objects):
+def post_objects(token, collection_name, objects, content_type="application/json"):
     url = token["api_endpoint"] + "/storage/%s" % collection_name
     hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
     hawk_header = hawk.client.header(url, "POST", {"credentials": hawk_credentials, "ext":""})
-    r = requests.post(url, headers={"Authorization":hawk_header["field"],"Content-Type":"application/json"}, data=json.dumps(objects))
+    r = requests.post(url, headers={"Authorization":hawk_header["field"],"Content-Type":content_type}, data=json.dumps(objects))
+    print r.status_code, r.reason, r.text
     r.raise_for_status()
     return r.json(),r
 
@@ -127,6 +128,9 @@ def random_id():
 
 def random_object():
     return {"payload":"This is some payload at %f" % time.time()}
+
+def random_object_with_id():
+    return {"payload":"This is some payload at %f" % time.time(), "id": random_id()}
 
 def random_objects(n):
     return [{"payload":"This is some payload at %f" % time.time(), "id":random_id()} for i in range(n)]
@@ -234,7 +238,6 @@ class StorageTestCase(unittest.TestCase):
         # Create a collection
         for i in range(5):
             put_object(self.token, "col1", str(i), random_object())
-            #post_objects(self.token, "col1", bsos)
         # Non-existent collections appear as empty
         objects,r = get_objects(self.token, "doesnotexist")
         self.assertEquals(objects, [])
@@ -377,6 +380,41 @@ class StorageTestCase(unittest.TestCase):
             ids,r = get_objects(self.token, "test", accepts="application/cheese")
         self.assertEqual(context.exception.response.status_code, 406)
 
+    # Tests for POST /storage/collection
+
+    def test_post_objects(self):
+        # Post two objects
+        o1 = random_object_with_id()
+        o2 = random_object_with_id()
+        j,r = post_objects(self.token, "test", [o1, o2])
+        # Check if they are in there
+        no1,r = get_object(self.token, "test", o1["id"])
+        self.assertEquals(no1["payload"], o1["payload"])
+        self.assertEquals(no1["modified"], j["modified"])
+        no2,r = get_object(self.token, "test", o2["id"])
+        self.assertEquals(no2["payload"], o2["payload"])
+        self.assertEquals(no2["modified"], j["modified"])
+        # Post again with change to the payload
+        o1["payload"] = "cheese"
+        j,r = post_objects(self.token, "test", [o1, o2])
+        # Check if good
+        no1,r = get_object(self.token, "test", o1["id"])
+        self.assertEquals(no1["payload"], o1["payload"])
+        self.assertEquals(no1["modified"], j["modified"])
+        no2,r = get_object(self.token, "test", o2["id"])
+        self.assertEquals(no2["payload"], o2["payload"])
+        self.assertEquals(no2["modified"], j["modified"])
+
+    def test_post_objects_content_type(self):
+        # Both tex/plain and application/json should be supported
+        for content_type in ("text/plain", "application/json"):
+            o = random_object_with_id()
+            j,r = post_objects(self.token, "test", [o], content_type=content_type)
+            o,r = get_object(self.token, "test", o["id"])
+        # Unsupported content type results in a 416
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            j,r = post_objects(self.token, "test", [random_object_with_id()], content_type="application/cheese")
+        self.assertEqual(context.exception.response.status_code, 415)
 
     # Tests for DELETE /storage/<collection>/<object>
 
