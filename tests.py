@@ -45,6 +45,15 @@ def delete_collection(token, collection_name, ids=None):
     r.raise_for_status()
     return r.json(),r
 
+def delete_storage(token):
+    url = token["api_endpoint"] + "/storage"
+    hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
+    hawk_header = hawk.client.header(url, "DELETE", {"credentials": hawk_credentials, "ext":""})
+    r = requests.delete(url, headers={"Authorization":hawk_header["field"]})
+    r.raise_for_status()
+    return r.json(),r
+
+
 def get_object(token, collection_name, object_id):
     url = token["api_endpoint"] + "/storage/%s/%s" % (collection_name, object_id)
     hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
@@ -368,6 +377,9 @@ class StorageTestCase(unittest.TestCase):
             ids,r = get_objects(self.token, "test", accepts="application/cheese")
         self.assertEqual(context.exception.response.status_code, 406)
 
+
+    # Tests for DELETE /storage/<collection>/<object>
+
     def test_delete_objects(self):
         # Put some objects in the collection
         for i in range(5):
@@ -381,6 +393,8 @@ class StorageTestCase(unittest.TestCase):
         ids,r = get_objects(self.token, "test")
         self.assertEquals(len(ids), 3)
         self.assertEquals(sorted(ids), ['0', '2', '4'])
+
+    # Tests for DELETE /storage/<collection>
 
     def test_delete_collection(self):
         # Make sure the collection does not exist
@@ -409,6 +423,8 @@ class StorageTestCase(unittest.TestCase):
             r = delete_collection(self.token, "doesnotexist")
         self.assertEqual(context.exception.response.status_code, 404)
 
+    # Tests for DELETE /storage/<collection>?ids=
+
     def test_delete_collection_ids(self):
         # Put some objects in the collection
         for i in range(5):
@@ -431,9 +447,18 @@ class StorageTestCase(unittest.TestCase):
             r = delete_collection(self.token, "doesnotexist", ids=["1","2","3"])
         self.assertEqual(context.exception.response.status_code, 404)
 
-    def test_delete_storage(self):
-        pass
+    # Tests for DELETE /storage
 
+    def test_delete_storage(self):
+        for i in range(5):
+            put_object(self.token, "test", str(i), random_object())
+        # Delete it all
+        j,r = delete_storage(self.token)
+        # Make sure it is gone
+        objects,r = get_objects(self.token, "test")
+        self.assertEquals(len(objects), 0)
+        collections,r = get_info_collections(self.token)
+        self.assertTrue("test" not in collections)
 
 
 
