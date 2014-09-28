@@ -83,7 +83,7 @@ def post_objects(token, collection_name, objects, content_type="application/json
     hawk_credentials = {"id": str(token["id"]), "key": str(token["key"]), "algorithm":"sha256"}
     hawk_header = hawk.client.header(url, "POST", {"credentials": hawk_credentials, "ext":""})
     r = requests.post(url, headers={"Authorization":hawk_header["field"],"Content-Type":content_type}, data=json.dumps(objects))
-    print r.status_code, r.reason, r.text
+    #print r.status_code, r.reason, r.text
     r.raise_for_status()
     return r.json(),r
 
@@ -387,6 +387,9 @@ class StorageTestCase(unittest.TestCase):
         o1 = random_object_with_id()
         o2 = random_object_with_id()
         j,r = post_objects(self.token, "test", [o1, o2])
+        # Check if the response looks ok
+        for field in ("failed", "modified", "success"):
+            self.assertTrue(field in j)
         # Check if they are in there
         no1,r = get_object(self.token, "test", o1["id"])
         self.assertEquals(no1["payload"], o1["payload"])
@@ -415,6 +418,23 @@ class StorageTestCase(unittest.TestCase):
         with self.assertRaises(requests.exceptions.HTTPError) as context:
             j,r = post_objects(self.token, "test", [random_object_with_id()], content_type="application/cheese")
         self.assertEqual(context.exception.response.status_code, 415)
+
+    # def test_post_objects_bad_objects(self):
+    #     bad_objects = [
+    #         # Bad sortindex
+    #         {"payload": "foo", "sortindex": "NOPE"},
+    #         {"payload": "foo", "sortindex": None},
+    #         # Bad payload
+    #         {"payload": None},
+    #         {"payload": 1234},
+    #     ]
+    #     for o in bad_objects:
+    #         j,r = post_objects(self.token, "test", [o])
+    #         self.assertTrue("bad1" in j["failed"])
+    #         with self.assertRaises(requests.exceptions.HTTPError) as context:
+    #             o,r = get_object(self.token, "test", "bad1")
+    #         self.assertEqual(context.exception.response.status_code, 404)
+
 
     # Tests for DELETE /storage/<collection>/<object>
 
